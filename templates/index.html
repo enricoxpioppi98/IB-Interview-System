@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Interview{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2 class="mb-4">Schedule an Interview</h2>
+            <form method="POST" action="{{ url_for('schedule') }}" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="bank" class="form-label">Target Bank</label>
+                    <select class="form-select" id="bank" name="bank" required>
+                        {% for bank in banks %}
+                            <option value="{{ bank }}">{{ bank }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="coverage" class="form-label">Coverage Area</label>
+                    <select class="form-select" id="coverage" name="coverage" required>
+                        {% for area in coverage_areas %}
+                            <option value="{{ area }}">{{ area }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="interview_type" class="form-label">Interview Type</label>
+                    <select class="form-select" id="interview_type" name="interview_type" required>
+                        {% for type in interview_types %}
+                            <option value="{{ type }}">{{ type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Resume Upload</label>
+                    <div class="file-upload">
+                        <label for="resume" class="file-upload-btn">
+                            <div class="file-upload-text">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <div>Drag and drop your resume here or click to browse</div>
+                                <small>Accepted formats: PDF, TXT</small>
+                            </div>
+                        </label>
+                        <input type="file" class="form-control" id="resume" name="resume" accept=".pdf,.txt" required>
+                        <div class="file-name">
+                            <span class="selected-file-name"></span>
+                            <span class="remove-file">&times;</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Select Interview Date and Time</label>
+                    <div class="calendar-container glass-card">
+                        <input type="text" class="form-control" id="interview_date" name="interview_date" readonly style="display: none;">
+                    </div>
+                    
+                    <div class="time-slot-section mt-3 glass-card">
+                        <h5 class="mb-3">Available Times <span class="timezone-display">(Eastern Time)</span></h5>
+                        <div id="timeSlotContainer" class="d-flex flex-wrap gap-2">
+                            <!-- Time slots will be dynamically populated here -->
+                        </div>
+                        <input type="hidden" id="interview_time" name="interview_time">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Schedule Interview</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* Calendar customization */
+    .flatpickr-calendar {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 20px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    .flatpickr-months {
+        background: rgba(0, 122, 255, 0.1);
+        padding: 10px 0;
+    }
+
+    .flatpickr-month {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .flatpickr-weekdays {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .flatpickr-weekday {
+        color: rgba(255, 255, 255, 0.6) !important;
+        font-weight: 500;
+    }
+
+    .flatpickr-day {
+        color: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 8px;
+        margin: 2px;
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .flatpickr-day.disabled {
+        color: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .flatpickr-day.selected {
+        background: rgba(0, 122, 255, 0.3) !important;
+        border: 1px solid rgba(0, 122, 255, 0.4) !important;
+    }
+
+    .flatpickr-day:hover {
+        background: rgba(0, 122, 255, 0.2) !important;
+    }
+
+    /* Time slots */
+    .time-slot-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        margin: 5px;
+        min-width: 120px;
+        text-align: center;
+    }
+
+    .time-slot-btn:hover:not(.booked) {
+        background: rgba(0, 122, 255, 0.2);
+    }
+
+    .time-slot-btn.selected {
+        background: rgba(0, 122, 255, 0.3);
+        border-color: rgba(0, 122, 255, 0.4);
+    }
+
+    .time-slot-btn.booked {
+        background: rgba(255, 0, 0, 0.1);
+        border-color: rgba(255, 0, 0, 0.2);
+        color: rgba(255, 255, 255, 0.4);
+        cursor: not-allowed;
+    }
+
+    /* Custom file upload styling */
+    .file-upload {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .file-upload input[type="file"] {
+        display: none;
+    }
+
+    .file-upload-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .file-upload-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .file-upload-btn i {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: rgba(0, 122, 255, 0.6);
+    }
+
+    .file-name {
+        background: rgba(0, 122, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 0.9em;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .file-name.active {
+        display: flex;
+    }
+
+    .remove-file {
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        padding: 4px;
+    }
+
+    .remove-file:hover {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .file-upload-text {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .file-upload-text small {
+        color: rgba(255, 255, 255, 0.6);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timeSlots = [
+        "9:00 AM ET", "10:00 AM ET", "11:00 AM ET",
+        "1:00 PM ET", "2:00 PM ET", "3:00 PM ET", "4:00 PM ET"
+    ];
+
+    let bookedSlots = {};
+    
+    // Fetch booked slots from server
+    fetch('/get_booked_slots')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(slot => {
+                if (!bookedSlots[slot.date]) {
+                    bookedSlots[slot.date] = [];
+                }
+                bookedSlots[slot.date].push(slot.time);
+            });
+        });
+
+    // Initialize flatpickr
+    const calendar = flatpickr("#interview_date", {
+        inline: true,
+        minDate: "today",
+        maxDate: new Date().fp_incr(14),
+        disable: [
+            function(date) {
+                // Disable weekends
+                return date.getDay() === 0 || date.getDay() === 6;
+            }
+        ],
+        onChange: function(selectedDates, dateStr) {
+            updateTimeSlots(dateStr);
+        }
+    });
+
+    function updateTimeSlots(dateStr) {
+        const container = document.getElementById('timeSlotContainer');
+        container.innerHTML = '';
+        
+        const bookedTimesForDate = bookedSlots[dateStr] || [];
+
+        timeSlots.forEach(time => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'time-slot-btn';
+            btn.textContent = time;
+            
+            if (bookedTimesForDate.includes(time)) {
+                btn.classList.add('booked');
+                btn.disabled = true;
+            } else {
+                btn.onclick = () => selectTimeSlot(btn, dateStr, time);
+            }
+            
+            container.appendChild(btn);
+        });
+    }
+
+    function selectTimeSlot(btn, dateStr, time) {
+        // Remove selection from other buttons
+        document.querySelectorAll('.time-slot-btn.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // Add selection to clicked button
+        btn.classList.add('selected');
+        
+        // Update hidden inputs
+        document.getElementById('interview_date').value = dateStr;
+        document.getElementById('interview_time').value = time;
+    }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('resume');
+    const fileNameDisplay = document.querySelector('.file-name');
+    const selectedFileName = document.querySelector('.selected-file-name');
+    const removeFileBtn = document.querySelector('.remove-file');
+    const uploadBtn = document.querySelector('.file-upload-btn');
+
+    // Handle file selection
+    fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            const fileName = this.files[0].name;
+            selectedFileName.textContent = fileName;
+            fileNameDisplay.classList.add('active');
+            uploadBtn.style.borderStyle = 'solid';
+            uploadBtn.style.background = 'rgba(0, 122, 255, 0.1)';
+        } else {
+            resetFileUpload();
+        }
+    });
+
+    // Handle remove file
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        resetFileUpload();
+    });
+
+    // Handle drag and drop
+    uploadBtn.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.background = 'rgba(0, 122, 255, 0.1)';
+        this.style.borderStyle = 'dashed';
+    });
+
+    uploadBtn.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        if (!fileInput.files.length) {
+            this.style.background = 'rgba(255, 255, 255, 0.03)';
+            this.style.borderStyle = 'dashed';
+        }
+    });
+
+    uploadBtn.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            const validTypes = ['.pdf', '.txt'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (validTypes.includes(fileExtension)) {
+                fileInput.files = files;
+                selectedFileName.textContent = file.name;
+                fileNameDisplay.classList.add('active');
+                this.style.borderStyle = 'solid';
+                this.style.background = 'rgba(0, 122, 255, 0.1)';
+            }
+        }
+    });
+
+    function resetFileUpload() {
+        fileNameDisplay.classList.remove('active');
+        uploadBtn.style.background = 'rgba(255, 255, 255, 0.03)';
+        uploadBtn.style.borderStyle = 'dashed';
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

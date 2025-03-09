@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IB Interview System - {% block title %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: rgba(0, 0, 0, 0.1);
+            --text-color: rgba(255, 255, 255, 0.9);
+            --header-bg: rgba(28, 28, 28, 0.75);
+        }
+
+        body {
+            background-color: #000;
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Glowing sphere effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(
+                circle,
+                rgba(66, 133, 244, 0.15) 0%,
+                rgba(66, 133, 244, 0.1) 20%,
+                rgba(66, 133, 244, 0.05) 40%,
+                rgba(66, 133, 244, 0.02) 60%,
+                transparent 70%
+            );
+            border-radius: 50%;
+            pointer-events: none;
+            animation: pulse 8s ease-in-out infinite;
+            z-index: -2;
+        }
+
+        /* Additional ambient glow */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(66, 133, 244, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(66, 133, 244, 0.05) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Pulse animation for the sphere */
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Content wrapper to ensure content appears above the sphere */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        .navbar {
+            background: rgba(0, 0, 0, 0.75) !important;
+            backdrop-filter: blur(40px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+            padding: 0.8rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(66, 133, 244, 0.15);
+        }
+
+        /* Add back the animated border for navbar */
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: rgba(66, 133, 244, 0.5);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-50%);
+        }
+
+        .navbar:hover::after {
+            width: 100%;
+        }
+
+        .navbar:hover {
+            background: rgba(0, 0, 0, 0.85) !important;
+            box-shadow: 0 2px 30px rgba(66, 133, 244, 0.2);
+        }
+
+        .navbar .container {
+            padding: 0.5rem 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin: 0 1rem;
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(66, 133, 244, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 
+                0 4px 24px -1px rgba(0, 0, 0, 0.2),
+                0 0 20px rgba(66, 133, 244, 0.1);
+            transform: translateY(0);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(
+                circle,
+                rgba(66, 133, 244, 0.05) 0%,
+                transparent 70%
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .glass-card:hover::before {
+            opacity: 1;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-5px);
+            box-shadow: 
+                0 8px 32px -1px rgba(0, 0, 0, 0.2),
+                0 0 30px rgba(66, 133, 244, 0.2);
+            border-color: rgba(66, 133, 244, 0.2);
+        }
+
+        .navbar-brand {
+            font-weight: 500;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9) !important;
+            margin-left: 0.5rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .navbar-brand::after {
+            display: none;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.75) !important;
+            font-size: 0.95rem;
+            padding: 0.4rem 0.8rem !important;
+            margin: 0 0.2rem;
+            border-radius: 4px;
+            position: relative;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .nav-link:hover {
+            color: rgba(255, 255, 255, 1) !important;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link::after {
+            display: none;
+        }
+
+        .container {
+            padding: 2rem;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            border-radius: 12px;
+            padding: 0.75rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            box-shadow: none;
+            transform: scale(1.01);
+        }
+
+        .btn-primary {
+            background: rgba(0, 122, 255, 0.3);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            color: var(--text-color);
+        }
+
+        .btn-primary:hover {
+            background: rgba(0, 122, 255, 0.4);
+            border-color: rgba(0, 122, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            border-radius: 12px;
+        }
+
+        /* Apple-style typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Smooth navigation highlight */
+        .nav-link {
+            color: rgba(255, 255, 255, 0.7) !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: rgba(0, 122, 255, 0.4);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Additional glass effects */
+        ::selection {
+            background: rgba(0, 122, 255, 0.2);
+        }
+
+        /* Smooth scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Add a subtle noise texture to the navbar */
+        .navbar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.015;
+            pointer-events: none;
+        }
+
+        /* Add styles for calendar popup */
+        .bootstrap-datetimepicker-widget {
+            z-index: 9999 !important;
+        }
+
+        /* Ensure dropdowns and popups are above everything */
+        .dropdown-menu,
+        .modal,
+        .popover,
+        .tooltip {
+            z-index: 9999 !important;
+        }
+
+        /* Add styles for calendar popup */
+        .flatpickr-calendar {
+            z-index: 99999 !important;
+            background: rgba(0, 0, 0, 0.95) !important;
+            border: 1px solid rgba(66, 133, 244, 0.2) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+        }
+
+        .flatpickr-calendar.open {
+            display: block !important;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .flatpickr-day {
+            color: rgba(255, 255, 255, 0.9) !important;
+            background: transparent !important;
+        }
+
+        .flatpickr-day:hover {
+            background: rgba(66, 133, 244, 0.2) !important;
+        }
+
+        .flatpickr-day.selected {
+            background: rgba(66, 133, 244, 0.4) !important;
+            border-color: rgba(66, 133, 244, 0.6) !important;
+        }
+
+        .flatpickr-months,
+        .flatpickr-weekdays,
+        .flatpickr-weekday {
+            background: transparent !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .flatpickr-current-month,
+        .flatpickr-monthDropdown-months,
+        .flatpickr-monthDropdown-month {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .flatpickr-time {
+            background: transparent !important;
+            border-top: 1px solid rgba(66, 133, 244, 0.2) !important;
+        }
+
+        .flatpickr-time input,
+        .flatpickr-time .flatpickr-time-separator,
+        .flatpickr-time .flatpickr-am-pm {
+            color: rgba(255, 255, 255, 0.9) !important;
+            background: transparent !important;
+        }
+
+        /* Ensure all popups and dropdowns are above the sphere */
+        .dropdown-menu,
+        .modal,
+        .popover,
+        .tooltip,
+        .flatpickr-calendar,
+        .bootstrap-datetimepicker-widget {
+            z-index: 99999 !important;
+            position: relative !important;
+        }
+
+        /* Ensure form elements are clickable */
+        input, select, button, .form-control, .form-select {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Adjust sphere z-index */
+        body::before,
+        body::after {
+            z-index: -1 !important;
+            pointer-events: none !important;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="content-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/">IB Interview System</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Schedule Interview</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/view_bookings">View Bookings</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
